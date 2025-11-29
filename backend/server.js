@@ -8,10 +8,25 @@ connectDB();
 
 const app = express();
 
-// 🔥 EMERGENCY CORS FIX - Allows ALL origins (works immediately)
+// ✅ FIXED: Specific origins + credentials (no wildcard)
+const allowedOrigins = [
+  'https://kmkk-ecommerce-app.vercel.app',
+  'https://kmkk-ecommerce-mcjfx3fvw-kanimozhikalimuthus-projects.vercel.app',
+  'https://kmkk-ecommerce-da14xgkc0-kanimozhikalimuthus-projects.vercel.app',  // ← YOUR NEWEST
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: '*',  // ← THIS FIXES EVERYTHING
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS blocked: ' + origin));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -24,4 +39,7 @@ app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log('✅ CORS origins:', allowedOrigins);
+});
