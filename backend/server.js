@@ -8,25 +8,30 @@ connectDB();
 
 const app = express();
 
-// ✅ FIXED: Specific origins + credentials (no wildcard)
+// 🔥 ALL YOUR VERCEL URLS + LOCALHOST
 const allowedOrigins = [
   'https://kmkk-ecommerce-app.vercel.app',
   'https://kmkk-ecommerce-mcjfx3fvw-kanimozhikalimuthus-projects.vercel.app',
-  'https://kmkk-ecommerce-da14xgkc0-kanimozhikalimuthus-projects.vercel.app',  // ← YOUR NEWEST
+  'https://kmkk-ecommerce-da14xgkc0-kanimozhikalimuthus-projects.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000'
 ];
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+  origin: function(origin, callback) {
+    // Allow non-browser requests (Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, origin);  // ✅ Return EXACT origin
     } else {
-      callback(new Error('CORS blocked: ' + origin));
+      console.log('🚫 Blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -41,5 +46,5 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log('✅ CORS origins:', allowedOrigins);
+  console.log('✅ CORS enabled for:', allowedOrigins.join('\n  - '));
 });
