@@ -8,31 +8,33 @@ connectDB();
 
 const app = express();
 
-// 🔥 ALL YOUR VERCEL URLS + LOCALHOST
-const allowedOrigins = [
-  'https://kmkk-ecommerce-app.vercel.app',
-  'https://kmkk-ecommerce-mcjfx3fvw-kanimozhikalimuthus-projects.vercel.app',
-  'https://kmkk-ecommerce-da14xgkc0-kanimozhikalimuthus-projects.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000'
-];
-
-app.use(cors({
+// 🔥 DYNAMIC CORS - Matches ANY Vercel + localhost (NO MANUAL UPDATES!)
+const corsOptions = {
   origin: function(origin, callback) {
-    // Allow non-browser requests (Postman, curl)
+    // Allow non-browser requests (Postman, curl, mobile)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.includes(origin)) {
-      callback(null, origin);  // ✅ Return EXACT origin
-    } else {
-      console.log('🚫 Blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+    // ✅ PATTERN 1: ANY Vercel deployment
+    if (origin.includes('vercel.app')) {
+      console.log(`✅ Vercel origin allowed: ${origin}`);
+      return callback(null, origin);
     }
+    
+    // ✅ PATTERN 2: Local development
+    if (origin.includes('localhost')) {
+      console.log(`✅ Localhost allowed: ${origin}`);
+      return callback(null, origin);
+    }
+    
+    console.log(`🚫 Blocked: ${origin}`);
+    callback(new Error('CORS: Origin not allowed'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
@@ -46,5 +48,5 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log('✅ CORS enabled for:', allowedOrigins.join('\n  - '));
+  console.log('✅ Dynamic CORS: All Vercel + localhost');
 });
